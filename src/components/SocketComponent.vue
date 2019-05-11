@@ -6,7 +6,10 @@
       </button>
     </form>
     <ul>
-      <li v-for="response in socketResponse">{{ response }}</li>
+      <li v-for="response in socketResponse" :key="response.id">
+        {{ response.text }}
+        <button @click="deleteMessage(response.id)">X</button>
+      </li>
     </ul>
   </div>
 </template>
@@ -17,25 +20,44 @@ export default {
   data: function() {
     return {
       localmsg: '',
+      messageIndex: 0,
       socketResponse: [],
     };
   },
   sockets: {
-    connected: function() {
-      this.socketResponse.push('User connected!');
+    connected() {
+      this.socketResponse.push({
+        id: this.messageIndex++,
+        text: 'User connected!',
+      });
     },
-    chatEmit: function(data) {
-      this.socketResponse.push(data);
+    chatEmit(data) {
+      this.socketResponse.push({id: this.messageIndex++, text: data});
     },
-    disconnected: function() {
-      this.socketResponse.push('User disconnected!');
+    disconnected() {
+      this.socketResponse.push({
+        id: this.messageIndex++,
+        text: 'User disconnected!',
+      });
     },
   },
   methods: {
-    clickButton: function(data) {
-      // $socket is socket.io-client instance
-      this.$socket.emit('posted', data);
+    clickButton(data) {
+      if (data != '') {
+        this.$socket.emit('posted', data);
+        this.localmsg = '';
+      }
+    },
+    deleteMessage(respId) {
+      let index = this.socketResponse.findIndex(x => x.id == respId);
+      this.socketResponse.splice(index, 1);
     },
   },
 };
 </script>
+
+<style>
+ul {
+  list-style: none;
+}
+</style>
